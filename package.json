@@ -26,6 +26,8 @@
     "@emotion/eslint-plugin": "^11.11.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@ionic/core": "^7.1.0",
     "@ionic/react": "^7.1.0",
     "@ionic/react-router": "^7.1.0",

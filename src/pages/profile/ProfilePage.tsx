@@ -30,15 +30,32 @@ import { swapHorizontalOutline } from "ionicons/icons";
 import { css } from "@emotion/react";
 import AccountSwitcher from "../../features/auth/AccountSwitcher";
 import { PageContext } from "../../features/auth/PageContext";
+import snoowrap from "snoowrap";
 
-const Incognito = styled(IncognitoSvg)`
-  opacity: 0.1;
-  width: 300px;
-  height: 300px;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-`;
+function getCodeFromURI() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('code');
+}
+
+function getInitialToken(code){
+  const options = {
+    code: code,
+    userAgent: localStorage.getItem("userAgent"),
+    clientId: localStorage.getItem("clientId"),
+    redirectUri: localStorage.getItem("redirectURI"),
+    clientSecret: localStorage.getItem("clientSecret")
+  }
+  console.log(options)
+  snoowrap.fromAuthCode(options).then(r => {
+    // Now we have a requester that can access reddit through the user's account
+    console.log(r)
+    localStorage.setItem("refreshToken", r.refreshToken)
+    localStorage.setItem("accessToken", r.accessToken)
+  })
+}
+
+const code = getCodeFromURI()
+if (code) getInitialToken(code)
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -56,6 +73,7 @@ export default function ProfilePage() {
 
   const pageContext = useContext(PageContext);
   const handle = useAppSelector(handleSelector);
+
 
   const [presentAccountSwitcher, onDismissAccountSwitcher] = useIonModal(
     AccountSwitcher,
@@ -106,53 +124,12 @@ export default function ProfilePage() {
               padding: 1rem;
             `}
           >
-            Change the instance you&apos;re currently connected to below.
-            Alternatively, click <strong>login</strong> to join your instance
-            with your account.
+            Click <strong>login</strong> to sign in to your Reddit account.
+            You'll need your own API key.
           </p>
         </IonText>
         <IonList inset>
-          <InsetIonItem
-            onClick={() => {
-              setPickerOpen(true);
-            }}
-            detail
-          >
-            <IonIcon icon={swapHorizontalOutline} color="primary" />
-            <SettingLabel>
-              Connected to {connectedInstance}{" "}
-              <IonText color="medium">(as guest)</IonText>
-            </SettingLabel>
-          </InsetIonItem>
         </IonList>
-        <IonPicker
-          isOpen={pickerOpen}
-          onDidDismiss={() => setPickerOpen(false)}
-          columns={[
-            {
-              name: "server",
-              options: [
-                "lemmy.ml",
-                "lemmy.world",
-                "beehaw.org",
-                "sh.itjust.works",
-              ].map((server) => ({ text: server, value: server })),
-            },
-          ]}
-          buttons={[
-            {
-              text: "Cancel",
-              role: "cancel",
-            },
-            {
-              text: "Confirm",
-              handler: (value) => {
-                dispatch(updateConnectedInstance(value.server.value));
-              },
-            },
-          ]}
-        />
-        <Incognito />
       </AppContent>
     </IonPage>
   );

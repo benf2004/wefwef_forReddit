@@ -7,7 +7,7 @@
 <h1 align="center"/>wefwef <sup><em>alpha</em></sup></h1>
 
 <p align="center">
-A mobile-first Lemmy web client
+A mobile-first ~Lemmy~ Reddit web client
 </p>
 
 <br/>
