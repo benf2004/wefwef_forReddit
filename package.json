@@ -5,7 +5,7 @@
   "version": "0.2.1",
   "type": "module",
   "scripts": {
-    "dev": "node server.mjs",
+    "dev": "node server.mjs PORT=3000",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
