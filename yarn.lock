@@ -5624,7 +5624,7 @@ snoostorm@^1.5.2:
   dependencies:
     snoowrap "^1.20.1"
 
-snoowrap@^1.20.1:
+snoowrap@^1.20.1, snoowrap@^1.23.0:
   version "1.23.0"
   resolved "https://registry.yarnpkg.com/snoowrap/-/snoowrap-1.23.0.tgz#30f02514ee533b7e305df083ad5bb0741549e268"
   integrity sha512-8FIGWr20Gc+d/C3NRrNPp5VQFNb+eGaQyvIkM5KUL71pYpRM231fkRdLNydMrdtLNRDrTZeZApHHCb8Uk/QuTQ==
