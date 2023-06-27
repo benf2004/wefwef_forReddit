@@ -31,8 +31,11 @@ const MULTI_ACCOUNT_STORAGE_NAME = "credentials";
  * DO NOT CHANGE this type. It is persisted in the login cookie
  */
 export interface Credential {
-  jwt: string;
-  handle: string;
+  username: string;
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  accessToken: string;
 }
 
 /**
@@ -40,7 +43,7 @@ export interface Credential {
  */
 type CredentialStoragePayload = {
   accounts: Credential[];
-  activeHandle: string;
+  activeAccount: string;
 };
 
 interface PostState {
@@ -179,13 +182,8 @@ export const login =
       throw error;
     }
 
-    /*const site = await client.getSite({ auth: res.jwt });
-    const myUser = site.my_user?.local_user_view?.person;
-
-    if (!myUser) throw new Error("broke");
-
     dispatch(addAccount({ jwt: res.jwt, handle: getRemoteHandle(myUser) }));
-    dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));*/
+    dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));
   };
 
 export const getSite =
