@@ -53,8 +53,10 @@ export default function Login({
   const [server, setServer] = useState(POPULAR_SERVERS[0]);
   const [customServer, setCustomServer] = useState("");
   const [serverConfirmed, setServerConfirmed] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [redirectURI, setRedirectURI] = useState("");
+  const [agent, setAgent] = useState("");
   const usernameRef = useRef<IonInputCustomEvent<never>["target"]>(null);
   const [loading, setLoading] = useState(false);
   const pageRef = useRef();
@@ -70,9 +72,9 @@ export default function Login({
 
     try {
       return new URL(
-        customServer.startsWith("https://")
-          ? customServer
-          : `https://${customServer}`
+          customServer.startsWith("https://")
+              ? customServer
+              : `https://${customServer}`
       ).hostname;
     } catch (e) {
       return undefined;
@@ -93,63 +95,9 @@ export default function Login({
   }, [server]);
 
   async function submit() {
-    if (!server && !customServer) {
+    if (!clientId || !clientSecret || !agent || !redirectURI) {
       present({
-        message: `Please enter your instance domain name`,
-        duration: 3500,
-        position: "bottom",
-        color: "danger",
-      });
-      return;
-    }
-
-    if (!serverConfirmed) {
-      if (customServer) {
-        if (!customServerHostname) {
-          present({
-            message: `${customServer} is not a valid server URL. Please try again`,
-            duration: 3500,
-            position: "bottom",
-            color: "danger",
-          });
-
-          return;
-        }
-
-        setLoading(true);
-        try {
-          await getClient(customServerHostname).getSite({});
-        } catch (error) {
-          present({
-            message: `Problem connecting to ${customServerHostname}. Please try again`,
-            duration: 3500,
-            position: "bottom",
-            color: "danger",
-          });
-
-          throw error;
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      setServerConfirmed(true);
-      return;
-    }
-
-    if (!username || !password) {
-      present({
-        message: "Please fill out username and password fields",
-        duration: 3500,
-        position: "bottom",
-        color: "danger",
-      });
-      return;
-    }
-
-    if (!totp && needsTotp) {
-      present({
-        message: `Please enter your second factor authentication code for ${username}`,
+        message: "Please fill out all fields",
         duration: 3500,
         position: "bottom",
         color: "danger",
@@ -161,12 +109,12 @@ export default function Login({
 
     try {
       await dispatch(
-        login(
-          new LemmyHttp(`/api/${server ?? customServerHostname}`),
-          username,
-          password,
-          totp
-        )
+          login(
+              clientId,
+              clientSecret,
+              redirectURI,
+              agent
+          )
       );
     } catch (error) {
       if (error === "missing_totp_token") {
@@ -196,162 +144,98 @@ export default function Login({
   }
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit();
-      }}
-    >
-      <input type="submit" /> {/* Hack */}
-      <IonPage ref={pageRef}>
-        <IonHeader>
-          <IonToolbar>
-            <IonButtons slot="start">
-              <IonButton
-                color="medium"
-                onClick={() => {
-                  if (serverConfirmed) {
-                    setServerConfirmed(false);
-                    setNeedsTotp(false);
-                    setUsername("");
-                    setPassword("");
-                    setTotp("");
-                    return;
-                  }
+      <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+      >
+        <input type="submit"/> {/* Hack */}
+        <IonPage ref={pageRef}>
+          <IonHeader>
+            <IonToolbar>
+              <IonButtons slot="start">
+                <IonButton
+                    color="medium"
+                    onClick={() => {
+                      setClientId("");
+                      setClientSecret("");
+                      setRedirectURI("");
+                      setAgent("");
+                      onDismiss();
+                    }}
+                >
+                  Cancel
+                </IonButton>
+              </IonButtons>
+              <IonTitle>
+                <Centered>Login {loading && <Spinner color="dark"/>}</Centered>
+              </IonTitle>
+              <IonButtons slot="end">
+                <IonButton strong={true} type="submit" disabled={!clientId || !clientSecret || !redirectURI || !agent}>
+                  Next
+                </IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent>
+            <HelperText>Enter your credentials</HelperText>
+            <IonList inset>
+              <IonItem>
+                <IonInput
+                    label="Client ID"
+                    inputMode="text"
+                    value={clientId}
+                    onIonInput={(e) => setClientId(e.target.value)}
+                    disabled={loading}
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                    label="Client Secret"
+                    inputMode="text"
+                    value={clientSecret}
+                    onIonInput={(e) => setClientSecret(e.target.value)}
+                    disabled={loading}
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                    label="Redirect URI"
+                    inputMode="url"
+                    value={redirectURI}
+                    onIonInput={(e) => setRedirectURI(e.target.value)}
+                    disabled={loading}
+                />
+              </IonItem>
+              <IonItem>
+                <IonInput
+                    label="Agent"
+                    inputMode="text"
+                    value={agent}
+                    onIonInput={(e) => setAgent(e.target.value)}
+                    disabled={loading}
+                />
+              </IonItem>
+            </IonList>
 
-                  onDismiss();
-                }}
-              >
-                {serverConfirmed ? "Back" : "Cancel"}
-              </IonButton>
-            </IonButtons>
-            <IonTitle>
-              <Centered>Login {loading && <Spinner color="dark" />}</Centered>
-            </IonTitle>
-            <IonButtons slot="end">
-              <IonButton
-                strong={true}
-                type="submit"
-                disabled={!server && !customServer}
-              >
-                {serverConfirmed ? "Confirm" : "Next"}
-              </IonButton>
-            </IonButtons>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent>
-          {!serverConfirmed && (
-            <>
-              <HelperText>Choose your account&apos;s server</HelperText>
-              <IonRadioGroup
-                value={server}
-                onIonChange={(e) => setServer(e.target.value)}
-              >
-                <IonList inset>
-                  {POPULAR_SERVERS.map((server) => (
-                    <IonItem disabled={loading} key={server}>
-                      <IonRadio value={server} key={server}>
-                        {server}
-                      </IonRadio>
-                    </IonItem>
-                  ))}
-                  <IonItem disabled={loading}>
-                    <IonRadio value={undefined} color="danger">
-                      other
-                    </IonRadio>
-                  </IonItem>
-                </IonList>
-              </IonRadioGroup>
-              {server ? (
-                <></>
-              ) : (
-                <>
-                  <IonList inset>
-                    <IonItem>
-                      <IonInput
-                        label="URL"
-                        inputMode="url"
-                        value={customServer}
-                        onIonInput={(e) =>
-                          setCustomServer(e.target.value as string)
-                        }
-                        disabled={loading}
-                      />
-                    </IonItem>
-                  </IonList>
-                </>
-              )}
+            <HelperText>
+              <IonRouterLink onClick={() => presentTerms()}>
+                Privacy &amp; Terms
+              </IonRouterLink>
+            </HelperText>
 
-              <HelperText>
-                <IonRouterLink onClick={() => presentTerms()}>
-                  Privacy &amp; Terms
-                </IonRouterLink>
-              </HelperText>
-
-              <HelperText>
-                <IonRouterLink
-                  href="https://join-lemmy.org/instances"
+            <HelperText>
+              <IonRouterLink
+                  href="https://www.reddit.com/prefs/apps"
                   target="_blank"
                   rel="noopener noreferrer"
-                >
-                  <IonText color="primary">Don&apos;t have an account?</IonText>
-                </IonRouterLink>
-              </HelperText>
-            </>
-          )}
-          {serverConfirmed && (
-            <>
-              <HelperText>
-                {needsTotp ? (
-                  <>
-                    Enter 2nd factor auth code for {username}@
-                    {server ?? customServer}
-                  </>
-                ) : (
-                  <>Login to {server ?? customServerHostname}</>
-                )}
-              </HelperText>
-              {!needsTotp ? (
-                <IonList inset>
-                  <IonItem>
-                    <IonInput
-                      ref={usernameRef}
-                      label="Username or email"
-                      autocomplete="username"
-                      inputMode="email"
-                      value={username}
-                      onIonInput={(e) => setUsername(e.target.value as string)}
-                      disabled={loading}
-                    />
-                  </IonItem>
-                  <IonItem>
-                    <IonInput
-                      label="Password"
-                      type="password"
-                      value={password}
-                      onIonInput={(e) => setPassword(e.target.value as string)}
-                      disabled={loading}
-                      enterkeyhint="done"
-                    />
-                  </IonItem>
-                </IonList>
-              ) : (
-                <IonList inset>
-                  <IonItem>
-                    <IonInput
-                      label="2fa code"
-                      value={totp}
-                      onIonInput={(e) => setTotp(e.target.value as string)}
-                      disabled={loading}
-                      enterkeyhint="done"
-                    />
-                  </IonItem>
-                </IonList>
-              )}
-            </>
-          )}
-        </IonContent>
-      </IonPage>
-    </form>
+              >
+                <IonText color="primary">Don&apos;t have an API Key?</IonText>
+              </IonRouterLink>
+            </HelperText>
+          </IonContent>
+        </IonPage>
+      </form>
   );
 }

@@ -1,4 +1,5 @@
 import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
+import { snoowrap } from "@snoowrap"
 import { GetSiteResponse, LemmyHttp } from "lemmy-js-client";
 import { AppDispatch, RootState } from "../../store";
 import Cookies from "js-cookie";
@@ -161,33 +162,30 @@ export const handleSelector = createSelector([activeAccount], (account) => {
 });
 
 export const login =
-  (client: LemmyHttp, username: string, password: string, totp?: string) =>
+  (clientId: string, clientSecret: string, redirectURI: string, agent: string) =>
   async (dispatch: AppDispatch) => {
-    let res;
-
     try {
-      res = await client.login({
-        username_or_email: username,
-        password,
-        totp_2fa_token: totp || undefined,
-      });
+        localStorage.setItem("clientId", clientId)
+        localStorage.setItem("redirectURI", redirectURI)
+        localStorage.setItem("userAgent", agent)
+        localStorage.setItem("clientSecret", clientSecret)
+
+        const allScopes = "identity,edit,flair,history,modconfig,modflair,modlog,modposts,modwiki,mysubreddits,privatemessages,read,report,save,submit,subscribe,vote,wikiedit,wikiread"
+        const authUrl = `https://www.reddit.com/api/v1/authorize.compact?client_id=${clientId}&response_type=code&state=lkasfjdlfkajsldkj&redirect_uri=${redirectURI}&duration=permanent&scope=${allScopes}`
+        window.open(authUrl, "_self")
+
     } catch (error) {
       // todo
       throw error;
     }
 
-    if (!res.jwt) {
-      // todo
-      throw new Error("broke");
-    }
-
-    const site = await client.getSite({ auth: res.jwt });
+    /*const site = await client.getSite({ auth: res.jwt });
     const myUser = site.my_user?.local_user_view?.person;
 
     if (!myUser) throw new Error("broke");
 
     dispatch(addAccount({ jwt: res.jwt, handle: getRemoteHandle(myUser) }));
-    dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));
+    dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));*/
   };
 
 export const getSite =
