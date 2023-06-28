@@ -24,6 +24,7 @@ import { AppContext } from "../../features/auth/AppContext";
 import { useBuildGeneralBrowseLink } from "../../helpers/routes";
 import ItemIcon from "../../features/labels/img/ItemIcon";
 import { jwtSelector } from "../../features/auth/authSlice";
+import Snoowrap from "snoowrap";
 
 const SubIcon = styled(IonIcon)<{ color: string }>`
   border-radius: 50%;
@@ -77,15 +78,7 @@ export default function CommunitiesPage() {
       "id"
     );
 
-    pullAllBy(
-      communities,
-      Object.values(communityByHandle)
-        .filter(
-          (response) => response?.community_view.subscribed === "NotSubscribed"
-        )
-        .map((c) => c?.community_view.community),
-      "id"
-    );
+
 
     return communities;
   }, [follows, communityByHandle]);

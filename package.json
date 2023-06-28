@@ -16,7 +16,6 @@
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",
     "react-textarea-autosize": "^8.5.0",
-    "snoostorm": "^1.5.2",
     "snoowrap": "^1.23.0",
     "vite-express": "^0.9.1"
   },

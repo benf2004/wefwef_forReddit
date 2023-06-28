@@ -17,6 +17,7 @@ import {
   handleSelector,
   jwtSelector,
   updateConnectedInstance,
+  finishLogin
 } from "../../features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "../../store";
 import Login from "../../features/auth/Login";
@@ -30,32 +31,6 @@ import { swapHorizontalOutline } from "ionicons/icons";
 import { css } from "@emotion/react";
 import AccountSwitcher from "../../features/auth/AccountSwitcher";
 import { PageContext } from "../../features/auth/PageContext";
-import snoowrap from "snoowrap";
-
-function getCodeFromURI() {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('code');
-}
-
-function getInitialToken(code){
-  const options = {
-    code: code,
-    userAgent: localStorage.getItem("userAgent"),
-    clientId: localStorage.getItem("clientId"),
-    redirectUri: localStorage.getItem("redirectURI"),
-    clientSecret: localStorage.getItem("clientSecret")
-  }
-  console.log(options)
-  snoowrap.fromAuthCode(options).then(r => {
-    // Now we have a requester that can access reddit through the user's account
-    console.log(r)
-    localStorage.setItem("refreshToken", r.refreshToken)
-    localStorage.setItem("accessToken", r.accessToken)
-  })
-}
-
-const code = getCodeFromURI()
-if (code) getInitialToken(code)
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -87,6 +62,16 @@ export default function ProfilePage() {
   useIonViewWillEnter(() => {
     if (pageRef.current) setActivePage(pageRef.current);
   });
+
+  function getCodeFromURI() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('code');
+  }
+
+  const code = getCodeFromURI()
+  if (code){
+    finishLogin(code)
+  }
 
   if (jwt)
     return (

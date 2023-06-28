@@ -11,22 +11,35 @@ import { resetUsers } from "../user/userSlice";
 import { resetInbox } from "../inbox/inboxSlice";
 import { differenceWith, uniqBy } from "lodash";
 import { resetCommunities } from "../community/communitySlice";
+import Snoowrap from "snoowrap";
 
 const MULTI_ACCOUNT_STORAGE_NAME = "credentials";
 
-// Migrations
-(() => {
-  // 2023-06-25 clean up cookie used for old versions
-  Cookies.remove("jwt");
+function getInitialToken(code){
+    const options = {
+        code: code,
+        userAgent: localStorage.getItem("userAgent"),
+        clientId: localStorage.getItem("clientId"),
+        redirectUri: localStorage.getItem("redirectURI"),
+        clientSecret: localStorage.getItem("clientSecret")
+    }
+    console.log(options)
+    Snoowrap.fromAuthCode(options).then(r => {
+        // Now we have a requester that can access reddit through the user's account
+        console.log(r)
+        localStorage.setItem("refreshToken", r.refreshToken)
+        localStorage.setItem("accessToken", r.accessToken)
+    })
+}
 
-  // 2023-06-26 prefer localStorage to avoid sending to proxy server
-  const cookie = Cookies.get(MULTI_ACCOUNT_STORAGE_NAME);
-
-  if (cookie && !localStorage.getItem(MULTI_ACCOUNT_STORAGE_NAME)) {
-    localStorage.setItem(MULTI_ACCOUNT_STORAGE_NAME, cookie);
-    Cookies.remove(MULTI_ACCOUNT_STORAGE_NAME);
-  }
-})();
+function getLocalCredentials(){
+    return {
+        clientSecret: localStorage.getItem("clientSecret"),
+        clientId: localStorage.getItem("clientId"),
+        userAgent: localStorage.getItem("userAgent"),
+        refreshToken: localStorage.getItem("refreshToken"),
+    }
+}
 
 /**
  * DO NOT CHANGE this type. It is persisted in the login cookie
@@ -182,10 +195,15 @@ export const login =
       // todo
       throw error;
     }
-
-    dispatch(addAccount({ jwt: res.jwt, handle: getRemoteHandle(myUser) }));
-    dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));
   };
+
+export const finishLogin =
+   async (code) => (dispatch: AppDispatch) => {
+       getInitialToken(code)
+       const creds = getLocalCredentials()
+       dispatch(addAccount(creds))
+       //dispatch(updateConnectedInstance(parseJWT(res.jwt).iss));
+   }
 
 export const getSite =
   () => async (dispatch: AppDispatch, getState: () => RootState) => {
@@ -220,8 +238,6 @@ export const changeAccount =
     dispatch(resetCommunities());
     dispatch(setPrimaryAccount(handle));
 
-    const iss = jwtIssSelector(getState());
-    if (iss) dispatch(updateConnectedInstance(iss));
   };
 
 export const logoutAccount =

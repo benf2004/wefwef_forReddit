@@ -67,20 +67,6 @@ export default function Login({
     onDismiss: (data: string, role: string) => onDismissTerms(data, role),
   });
 
-  const customServerHostname = (() => {
-    if (!customServer) return;
-
-    try {
-      return new URL(
-          customServer.startsWith("https://")
-              ? customServer
-              : `https://${customServer}`
-      ).hostname;
-    } catch (e) {
-      return undefined;
-    }
-  })();
-
   useEffect(() => {
     if (!serverConfirmed) return;
 
@@ -129,7 +115,6 @@ export default function Login({
         color: "danger",
       });
 
-      throw error;
     } finally {
       setLoading(false);
     }
